@@ -151,7 +151,13 @@
   @media (max-width:380px){ .workout .big{font-size:46px} .day .w{font-size:13px} }
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 
-  /* welcome splash: once per day, matches the gold icon */
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .music{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:10px 16px;border-radius:10px;text-decoration:none;
+    font:700 14.5px var(--body);color:#1B1408;background:linear-gradient(115deg,#F7DE96,#C4943A 45%,#F0D07E 70%,#B8862B)}
+  .music:hover{filter:brightness(1.05)}
+  .music:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* welcome splash, matches the gold icon */
   #splash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
     background:radial-gradient(circle at 50% 42%,#1E2436 0%,#06070B 70%);color:#F3E3B5;cursor:pointer;
     animation:splash-out .35s ease-in 1.4s forwards}
@@ -256,6 +262,10 @@
     {id:'bus-ica', c:'bus', name:'In-Class Assignment (ICA)', wt:'30% · date announced in class'}
   ];
 
+  var PLAYLIST_BTN = '<a class="music" href="https://open.anghami.com/QHO0yG8x96b" target="_blank" rel="noopener">' +
+    '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9 17.5a3 3 0 1 1-2-2.83V5.2l12-2.4v12.7a3 3 0 1 1-2-2.83V7.04L9 8.64z"/></svg>' +
+    'Open my playlist</a>';
+
   function ex(name, tag, cues){ return {name:name, tag:tag, cues:cues}; }
   var WORKOUTS = {
     push:{title:'Push', sub:'Chest · Shoulders · Triceps', list:[
@@ -355,7 +365,7 @@
       h += '<ul class="rest-list"><li>At least 10k steps</li><li>Hydrate</li><li>7–8 hours of sleep</li></ul>';
     } else {
       h += '<ul class="mini-list">' + w.list.map(function(x){ return '<li><span>' + esc(x.name) + '</span><span class="tag">' + esc(x.tag) + '</span></li>'; }).join('') + '</ul>';
-      h += '<button class="btn" type="button" data-go="gym">See form cues</button>';
+      h += '<div class="actions"><button class="btn" type="button" data-go="gym">See form cues</button>' + PLAYLIST_BTN + '</div>';
     }
     h += '</section>';
 
@@ -377,7 +387,7 @@
 
   function viewGym(){
     var todayDow = new Date().getDay();
-    var h = '<div class="head"><p class="eyebrow">PPL × Upper/Lower</p><h1>Weekly plan</h1></div>';
+    var h = '<div class="head"><p class="eyebrow">PPL × Upper/Lower</p><h1>Weekly plan</h1></div>' + PLAYLIST_BTN;
     h += '<div class="week" role="group" aria-label="Pick a day">' + WEEK_ORDER.map(function(d){
       var k = SCHEDULE[d];
       return '<button class="day' + (k === 'rest' ? ' rest' : '') + (d === todayDow ? ' today' : '') + '" type="button" data-day="' + d + '" aria-pressed="' + (d === state.gymDay) + '"><span class="d">' + DAY_SHORT[d] + '</span><span class="w">' + esc(WORKOUTS[k].title) + '</span></button>';
