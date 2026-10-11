@@ -520,7 +520,7 @@
 
   // Home-screen apps can cling to an old copy. On every open, compare against version.txt
   // on the server and reload with a cache-busting URL when a newer build exists.
-  var APP_VERSION = '2026-10-11.5';
+  var APP_VERSION = '2026-10-11.6';
   function checkForUpdate(){
     fetch('version.txt?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(v){
       v = v.trim();
@@ -547,7 +547,7 @@
   var AGENT_ID = 'agent_3901m4nw65ddesstcr8dmxz3m47c';
   var SDK_URL = 'https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.25.0/+esm';
   var box = document.getElementById('talk'), statusEl = document.getElementById('talk-status'), lineEl = document.getElementById('talk-line'), orb = box.querySelector('.orb');
-  var convo = null, raf = 0, mode = 'listening', closing = false;
+  var convo = null, raf = 0, mode = 'listening', closing = false, attemptId = 0;
 
   function setStatus(text, state){ statusEl.textContent = text; if(state) box.setAttribute('data-state', state); }
   function val(x, key){ return x && typeof x === 'object' ? x[key] : x; }
@@ -563,6 +563,7 @@
 
   function close(){
     closing = true;
+    attemptId++;
     cancelAnimationFrame(raf);
     var c = convo; convo = null;
     if(c){ try{ c.endSession(); }catch(e){} }
@@ -578,35 +579,54 @@
     lineEl.textContent = text;
   }
 
+  // Rejects with {step} if a promise hangs, so the screen never spins forever.
+  function within(p, ms, step){
+    return new Promise(function(res, rej){
+      var t = setTimeout(function(){ rej({step:step, timeout:true}); }, ms);
+      p.then(function(v){ clearTimeout(t); res(v); }, function(e){ clearTimeout(t); rej(e && e.step ? e : {step:step, error:e}); });
+    });
+  }
+  var STEP_HELP = {
+    mic: 'The microphone didn’t respond. iPhone sometimes blocks it inside home-screen apps.',
+    sdk: 'Couldn’t load the voice tools. Check your internet.',
+    connect: 'Couldn’t reach the voice agent.'
+  };
+
   function open(){
     closing = false;
     box.hidden = false;
-    lineEl.textContent = '';
+    lineEl.textContent = 'Step 1/3: waiting for microphone…';
     setStatus('Connecting…', 'connecting');
     // Ask for the mic straight from the tap, then hand over to the SDK.
     var mic = navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? navigator.mediaDevices.getUserMedia({audio:true}) : Promise.reject(new Error('no-mic'));
-    mic.then(function(stream){
+    within(mic, 10000, 'mic').then(function(stream){
       stream.getTracks().forEach(function(t){ t.stop(); });
-      return import(SDK_URL);
-    }, function(){
-      throw {mic:true};
+      if(!closing) lineEl.textContent = 'Step 2/3: loading voice tools…';
+      return within(import(SDK_URL), 15000, 'sdk');
     }).then(function(mod){
       if(closing) return;
-      return mod.Conversation.startSession({
+      lineEl.textContent = 'Step 3/3: connecting to Claude…';
+      var attempt = ++attemptId;
+      var sess = mod.Conversation.startSession({
         agentId: AGENT_ID,
-        onConnect: function(){ setStatus('Listening', 'listening'); },
+        connectionType: 'websocket',
+        onConnect: function(){ setStatus('Listening', 'listening'); lineEl.textContent = ''; },
         onDisconnect: function(){ if(!closing && convo){ close(); } },
         onModeChange: function(m){ mode = val(m, 'mode') || 'listening'; setStatus(mode === 'speaking' ? 'Speaking' : 'Listening', mode); },
         onMessage: function(m){ var t = val(m, 'message'); if(t) lineEl.textContent = t; },
         onError: function(e){ lineEl.textContent = (val(e, 'message') || String(e || 'Something went wrong')).slice(0, 160); }
-      }).then(function(c){
-        if(closing){ try{ c.endSession(); }catch(e){} return; }
+      });
+      // A session that connects after we gave up (timeout, End) must not keep running.
+      sess.then(function(c){ if(closing || attempt !== attemptId || box.getAttribute('data-state') === 'error'){ try{ c.endSession(); }catch(e){} } }, function(){});
+      return within(sess, 20000, 'connect').then(function(c){
+        if(closing || attempt !== attemptId) return;
         convo = c; pump();
       });
     }).catch(function(err){
       if(closing) return;
-      if(err && err.mic) fail('Your phone blocked the microphone here. Tap “Open in Safari instead” below.');
-      else fail('Check your internet, or tap “Open in Safari instead” below.');
+      var step = (err && err.step) || 'connect';
+      var detail = err && err.error ? ' (' + String(val(err.error, 'message') || err.error).slice(0, 90) + ')' : err && err.timeout ? ' (timed out)' : '';
+      fail(STEP_HELP[step] + detail + ' Tap “Open in Safari instead” below.');
     });
   }
 
