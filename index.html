@@ -44,7 +44,7 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
-  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(var(--nav-h) + 32px + env(safe-area-inset-bottom,0px))}
+  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(var(--nav-h) + 96px + env(safe-area-inset-bottom,0px))}
 
   h1,h2,h3{font-family:var(--display);font-stretch:75%;margin:0;text-wrap:balance;letter-spacing:.005em}
   h1{font-size:34px;font-weight:800;line-height:1.05}
@@ -156,6 +156,9 @@
     font:700 14.5px var(--body);color:#1B1408;background:linear-gradient(115deg,#F7DE96,#C4943A 45%,#F0D07E 70%,#B8862B)}
   .music:hover{filter:brightness(1.05)}
   .music:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  #voice{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 82px);display:flex;justify-content:center;pointer-events:none;transform:translateZ(0);z-index:6}
+  #voice elevenlabs-convai{display:inline-block;pointer-events:auto}
 
   /* welcome splash, matches the gold icon */
   #splash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
@@ -497,7 +500,7 @@
 
   // Home-screen apps can cling to an old copy. On every open, compare against version.txt
   // on the server and reload with a cache-busting URL when a newer build exists.
-  var APP_VERSION = '2026-10-11.2';
+  var APP_VERSION = '2026-10-11.3';
   function checkForUpdate(){
     fetch('version.txt?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(v){
       v = v.trim();
@@ -510,5 +513,9 @@
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') checkForUpdate(); });
 })();
 </script>
+<!-- ElevenLabs voice agent. The transformed wrapper becomes the widget's positioning box,
+     so its floating button sits above the bottom tab bar instead of covering it. -->
+<div id="voice"><elevenlabs-convai agent-id="agent_3901m4nw65ddesstcr8dmxz3m47c"</elevenlabs-convai></div>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2/dist/index.js" async type="text/javascript"></script>
 </body>
 </html>
