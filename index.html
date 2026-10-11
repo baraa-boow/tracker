@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tracker">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EEF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1113" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex, nofollow">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<title>Baraa's Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  /* Layout: one-column phone app, three views switched by a fixed bottom tab bar. */
+  :root{
+    --bg:#EEF0EC; --surface:#FFFFFF; --surface-2:#E3E7E1; --ink:#14181A; --muted:#5A6367; --border:#D3D8D1;
+    --accent:#1F55CF; --accent-soft:#DCE5FA; --good:#2C7A4B; --warn:#B0541A; --warn-soft:#F6E3D5;
+    --c-wri:#2E6F61; --c-mth:#A8681D; --c-bus:#33578C; --c-bio:#3C7A43; --c-ara:#8A3A6C;
+    --display:'Archivo','Arial Narrow',system-ui,sans-serif;
+    --body:'Source Sans 3',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+    --nav-h:64px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1113; --surface:#161B1E; --surface-2:#1F2529; --ink:#E8ECEA; --muted:#9BA4A9; --border:#2A3135;
+      --accent:#86A6FF; --accent-soft:#1C2742; --good:#6CC08D; --warn:#F09A5F; --warn-soft:#3A2618;
+      --c-wri:#6FCBB4; --c-mth:#E7AC5E; --c-bus:#8FB0E6; --c-bio:#82CB8A; --c-ara:#D890BC;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1113; --surface:#161B1E; --surface-2:#1F2529; --ink:#E8ECEA; --muted:#9BA4A9; --border:#2A3135;
+    --accent:#86A6FF; --accent-soft:#1C2742; --good:#6CC08D; --warn:#F09A5F; --warn-soft:#3A2618;
+    --c-wri:#6FCBB4; --c-mth:#E7AC5E; --c-bus:#8FB0E6; --c-bio:#82CB8A; --c-ara:#D890BC;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(var(--nav-h) + 32px + env(safe-area-inset-bottom,0px))}
+
+  h1,h2,h3{font-family:var(--display);font-stretch:75%;margin:0;text-wrap:balance;letter-spacing:.005em}
+  h1{font-size:34px;font-weight:800;line-height:1.05}
+  h2{font-size:24px;font-weight:750;line-height:1.1}
+  h3{font-size:19px;font-weight:700}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0}
+  .muted{color:var(--muted)}
+  .view{display:flex;flex-direction:column;gap:18px}
+  .head{display:flex;flex-direction:column;gap:4px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+  .card-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+  .pill.rest{background:var(--surface-2);color:var(--muted)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+
+  /* workout hero on Today */
+  .workout{border-color:var(--accent)}
+  .workout .big{font-family:var(--display);font-stretch:62%;font-weight:800;font-size:56px;line-height:.9;text-transform:uppercase;color:var(--accent)}
+  .mini-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .mini-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:15px}
+  .mini-list li:first-child{border-top:none}
+  .mini-list .tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .btn{appearance:none;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);font:600 14px var(--body);padding:9px 14px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;align-self:flex-start}
+  .btn:hover{border-color:var(--accent)}
+  .btn:focus-visible,.check:focus-visible,.tab:focus-visible,.day:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* deadline rows */
+  .rows{display:flex;flex-direction:column;gap:8px}
+  .row{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-left:4px solid var(--c);border-radius:10px;background:var(--surface)}
+  .row.done{opacity:.55}
+  .row.done .name{text-decoration:line-through}
+  .row .txt{min-width:0}
+  .row .name{font-weight:600;font-size:15px}
+  .row .detail{font-size:13px;color:var(--muted)}
+  .row .when{text-align:right;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .row .when b{display:block;font-size:13px;color:var(--ink)}
+  .row .when span{color:var(--muted)}
+  .row.past:not(.done) .when b{color:var(--warn)}
+  .check{appearance:none;width:24px;height:24px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;color:var(--surface);font-size:14px;line-height:1}
+  .done .check{background:var(--c);border-color:var(--c)}
+  .done .check::after{content:"\2713"}
+
+  .classes{display:flex;flex-direction:column;gap:6px}
+  .class{display:flex;gap:10px;align-items:baseline;font-size:15px}
+  .class .t{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:96px;font-variant-numeric:tabular-nums}
+  .class .c{font-weight:600;color:var(--c)}
+
+  /* gym */
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day{appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;min-width:0}
+  .day .d{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;color:var(--muted)}
+  .day .w{font-family:var(--display);font-stretch:62%;font-weight:750;font-size:15px}
+  .day.rest .w{color:var(--muted)}
+  .day.today{border-color:var(--accent)}
+  .day[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+  .day[aria-pressed="true"] .d,.day[aria-pressed="true"] .w{color:var(--surface)}
+  .ex{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid var(--border)}
+  .ex:first-of-type{border-top:none;padding-top:0}
+  .ex-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .ex-name{font-weight:700;font-size:17px}
+  .ex-tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .ex ol{margin:0;padding-left:20px;font-size:14.5px;color:var(--ink);display:flex;flex-direction:column;gap:2px}
+  .ex-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .sets{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--accent)}
+  .watch{font-size:14px;font-weight:600;color:var(--accent);text-decoration:none}
+  .watch:hover{text-decoration:underline}
+  .rules p{margin:0;font-size:14.5px}
+  .ladder{display:flex;gap:4px;align-items:flex-end;height:42px}
+  .ladder span{flex:1;background:var(--accent-soft);border-radius:3px 3px 0 0;position:relative}
+  .ladder span.up{background:var(--accent)}
+  .ladder-cap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .rest-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:16px}
+  .rest-list li{display:flex;gap:10px;align-items:center}
+  .rest-list li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+
+  /* school */
+  .about{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .about div{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .about .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .about .v{font-weight:600;font-size:15px}
+  .progress{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+  .progress i{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .3s ease}
+  .month{display:flex;flex-direction:column;gap:8px}
+  .month h3{display:flex;align-items:baseline;gap:8px}
+  .month h3 small{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--muted)}
+  .courses{display:flex;flex-direction:column}
+  .course{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--border);font-size:14.5px}
+  .course:first-child{border-top:none}
+  .course .code{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--c)}
+  .course .meta{color:var(--muted);font-size:13px}
+  .status{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+  .status::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--muted)}
+  .status.live::before{background:var(--good)}
+
+  /* bottom tabs */
+  nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+  nav .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h)}
+  .tab{appearance:none;border:none;background:none;color:var(--muted);font:700 15px var(--display);font-stretch:75%;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+  .tab::before{content:"";width:22px;height:3px;border-radius:2px;background:transparent}
+  .tab[aria-selected="true"]{color:var(--accent)}
+  .tab[aria-selected="true"]::before{background:var(--accent)}
+  .empty{font-size:14.5px;color:var(--muted);margin:0}
+  @media (max-width:380px){ .workout .big{font-size:46px} .day .w{font-size:13px} }
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <main id="app"></main>
+</div>
+<nav aria-label="Sections"><div class="in" role="tablist">
+  <button class="tab" id="tab-today" role="tab" data-tab="today">Today</button>
+  <button class="tab" id="tab-gym" role="tab" data-tab="gym">Gym</button>
+  <button class="tab" id="tab-school" role="tab" data-tab="school">School</button>
+</div></nav>
+
+<script>
+(function(){
+  "use strict";
+
+  var COURSES = {
+    wri:{code:'WRI 101', title:'Academic Writing I', who:'Gregory VanderPyl', days:[2,4], time:'11:00–12:15', room:'LAN 106'},
+    ara:{code:'ARA 102', title:'Intro to Arabic Heritage II', who:'Lahouari Taleb', days:[1,3], time:'11:00–12:15', room:'ELB_HSB-1010'},
+    mth:{code:'MTH 002', title:'Preparatory Business Mathematics', who:'Mohammad Shihab', days:[2,4], time:'12:30–1:45', room:'PHY 103'},
+    bus:{code:'BUS 100', title:'Introduction to Business', who:'Ali Khawaja', days:[1,3], time:'2:00–3:15', room:'SBA 000S'},
+    bio:{code:'BIO 103', title:'Introduction to Human Biology', who:'Sarah Dalibalta', days:[2,4], time:'2:00–3:15', room:'CHM 113'}
+  };
+  var CLASS_ORDER = ['wri','ara','mth','bus','bio'];
+
+  var EVENTS = [
+    {id:'ara-quiz1', d:'2026-08-31', c:'ara', kind:'Quiz', name:'Reading Quiz 1', detail:'Open-book, 10 MCQ/T-F', wt:'part of 15%'},
+    {id:'wri-ex1', d:'2026-09-06', c:'wri', kind:'Assignment', name:'Exercise #1', detail:'Due 11:59pm', wt:''},
+    {id:'ara-t1', d:'2026-09-14', c:'ara', kind:'Exam', name:'Topic Exam 1', detail:'Arabic Language and Arab Identity', wt:'20%'},
+    {id:'mth-t1', d:'2026-09-16', c:'mth', kind:'Test', name:'Test 1', detail:'Ch. 0 · Wed 6:00–7:15pm', wt:'20%'},
+    {id:'wri-summary', d:'2026-09-17', c:'wri', kind:'Assignment', name:'Graded Summary', detail:'In class', wt:'10%'},
+    {id:'bio-quiz1', d:'2026-09-17', c:'bio', kind:'Quiz', name:'Quiz 1', detail:'Chapters 1–3', wt:'5%'},
+    {id:'bus-exam1', d:'2026-09-28', c:'bus', kind:'Exam', name:'Exam 1', detail:'Common exam · 5:00–6:30pm', wt:'22.5%'},
+    {id:'bio-mid1', d:'2026-10-06', c:'bio', kind:'Midterm', name:'Midterm 1', detail:'Chapters 1, 2, 3, 5, 6', wt:'20%'},
+    {id:'ara-t2', d:'2026-10-14', c:'ara', kind:'Exam', name:'Topic Exam 2', detail:'Cultural Exchange in a Historical Context', wt:'20%'},
+    {id:'mth-t2', d:'2026-10-14', c:'mth', kind:'Test', name:'Test 2', detail:'Ch. 1 Linear Equations · Wed 6:00–7:15pm', wt:'20%'},
+    {id:'wri-essay1', s:'2026-10-19', d:'2026-10-22', c:'wri', kind:'Essay', name:'Analysis Essay I', detail:'Due week 9 (Oct 19–22)', wt:'30%'},
+    {id:'bio-hw', d:'2026-10-22', c:'bio', kind:'Homework', name:'Homework due', detail:'Cumulative homework', wt:'15%'},
+    {id:'ara-t3', d:'2026-11-02', c:'ara', kind:'Exam', name:'Topic Exam 3', detail:'Arab-Islamic Knowledge & its Contribution', wt:'20%'},
+    {id:'bio-quiz2', d:'2026-11-03', c:'bio', kind:'Quiz', name:'Quiz 2', detail:'Chapters 7–9', wt:'5%'},
+    {id:'bus-exam2', d:'2026-11-09', c:'bus', kind:'Exam', name:'Exam 2', detail:'Common exam · 5:00–6:30pm', wt:'22.5%'},
+    {id:'mth-t3', d:'2026-11-12', c:'mth', kind:'Test', name:'Test 3', detail:'Ch. 2 Quadratic Functions · Thu 6:00–7:15pm', wt:'25%'},
+    {id:'wri-essay2', s:'2026-11-16', d:'2026-11-19', c:'wri', kind:'Essay', name:'Analysis Essay II', detail:'Due week 13 (Nov 16–19)', wt:'30%'},
+    {id:'bio-mid2', d:'2026-11-17', c:'bio', kind:'Midterm', name:'Midterm 2', detail:'Chapters 7, 8, 9, 10, 14', wt:'20%'},
+    {id:'wri-final', s:'2026-11-23', d:'2026-11-26', c:'wri', kind:'Final', name:'Final Quiz + Reflective Response', detail:'In class · Nov 23–26', wt:'6% + 10%'}
+  ];
+  var TBA = [
+    {id:'mth-final', c:'mth', name:'Final Exam', wt:'25%'},
+    {id:'bus-final', c:'bus', name:'Final Exam (common)', wt:'25%'},
+    {id:'bio-final', c:'bio', name:'Final Exam · comprehensive', wt:'30%'},
+    {id:'ara-final', c:'ara', name:'Final Exam · al-Nahda topic', wt:'25%'},
+    {id:'bus-ica', c:'bus', name:'In-Class Assignment (ICA)', wt:'30% · date announced in class'}
+  ];
+
+  function ex(name, tag, cues){ return {name:name, tag:tag, cues:cues}; }
+  var WORKOUTS = {
+    push:{title:'Push', sub:'Chest · Shoulders · Triceps', list:[
+      ex('Incline dumbbell press','Chest',['Bench at about 30°.','Lower the dumbbells to your upper chest, elbows about 45° from your body.','Press up and slightly in.']),
+      ex('Cable fly','Chest',['Pulleys at chest height, slight bend in the elbows.','Bring your hands together in a wide hugging arc.','Return slowly until you feel the chest stretch.']),
+      ex('Machine shoulder press','Shoulders',['Set the seat so the handles start at shoulder height.','Press overhead without slamming the lockout.','Lower under control.']),
+      ex('Lateral raise','Shoulders',['Lean slightly forward and lead with your elbows.','Raise to shoulder height, no higher.','No swinging. Lighter weight, strict reps.']),
+      ex('Rope pushdown','Triceps',['Pin your elbows to your sides.','Push down and spread the rope apart at the bottom.','Let it rise slowly.']),
+      ex('Overhead cable extension','Triceps',['Face away from the cable, rope behind your head.','Keep elbows pointing forward and extend overhead.','Get a deep stretch at the bottom.'])
+    ]},
+    pull:{title:'Pull', sub:'Back · Biceps · Rear delts', list:[
+      ex('Lat pulldown','Back',['Grip just wider than your shoulders.','Pull the bar to your upper chest by driving the elbows down.','Don’t lean far back.']),
+      ex('Chest-supported row','Back',['Chest stays on the pad the whole set.','Row your elbows back toward your hips.','Squeeze your shoulder blades at the top.']),
+      ex('Seated cable row','Back',['Sit tall with a proud chest.','Pull the handle to your stomach.','Let your shoulders reach forward on the way back.']),
+      ex('Incline dumbbell curl','Biceps',['Bench at 45–60°, arms hanging straight down.','Curl without letting the elbows drift forward.','Lower slowly.']),
+      ex('Hammer curl (optional)','Biceps',['Palms face each other.','Keep elbows still and curl up.','Do it only if you have energy left.']),
+      ex('Reverse pec deck','Rear delts',['Face the pad, handles at shoulder height.','Sweep your arms back with a slight elbow bend.','Think "push out wide", not "squeeze the back".'])
+    ]},
+    legs:{title:'Legs', sub:'Quads · Hamstrings · Calves · Abs', list:[
+      ex('Hack squat (or leg press)','Quads',['Feet shoulder-width, middle of the platform.','Go deep with your back flat on the pad.','Drive up through the whole foot.']),
+      ex('Leg extension','Quads',['Line your knee up with the machine’s pivot.','Straighten fully and squeeze the quads.','Lower slowly.']),
+      ex('Romanian deadlift','Hamstrings',['Soft knees, push your hips back.','Slide the bar down your thighs to about mid-shin.','Back stays flat. Feel it in the hamstrings.']),
+      ex('Seated leg curl','Hamstrings',['Pad just above the ankles, thigh pad snug.','Curl your heels down and back.','Control the return.']),
+      ex('Standing calf raise','Calves',['Pause in the full stretch at the bottom.','Rise high onto the big toe.','No bouncing.']),
+      ex('Cable crunch','Abs',['Kneel with the rope beside your head.','Curl your ribs toward your hips (round the spine).','Don’t pull with your arms.']),
+      ex('Hanging knee raise','Abs',['Hang still, no swinging.','Bring knees to chest and tilt your pelvis up.','Lower with control.'])
+    ]},
+    upper:{title:'Upper', sub:'Back · Chest · Shoulders · Arms', list:[
+      ex('Pull-up (assisted is fine)','Back',['Grip just outside shoulder width.','Pull your chest toward the bar.','Full hang at the bottom of each rep.']),
+      ex('Single-arm cable row','Back',['Pull your elbow back toward your hip.','Let the shoulder stretch forward on the return.','Keep your torso still.']),
+      ex('Flat dumbbell press','Chest',['Shoulder blades pinned back on the bench.','Lower to mid-chest.','Press straight up.']),
+      ex('Cable lateral raise','Shoulders',['Cable at the lowest setting, handle in the far hand.','Raise your arm out to shoulder height.','Control it back down.']),
+      ex('Preacher curl','Biceps',['Armpits snug against the top of the pad.','Curl up, then lower almost to straight arms.','Slow on the way down.']),
+      ex('Dips (or machine dip)','Triceps',['Stay fairly upright to hit the triceps.','Lower until elbows reach about 90°.','Press back up without bouncing.'])
+    ]},
+    lower:{title:'Lower', sub:'Quads · Hamstrings · Adductors · Calves · Abs', list:[
+      ex('Leg press','Quads',['Feet shoulder-width on the platform.','Lower as deep as you can without your lower back lifting.','Press through your mid-foot.']),
+      ex('Bulgarian split squat','Quads',['Rear foot on a bench behind you.','Lower straight down until the back knee nearly touches.','Push up through the front foot.']),
+      ex('Lying leg curl','Hamstrings',['Hips stay pressed into the pad.','Curl your heels toward your glutes.','Lower slowly.']),
+      ex('Adductor machine','Adductors',['Sit tall.','Squeeze your legs together.','Open slowly into the stretch.']),
+      ex('Seated calf raise','Calves',['Pad on your lower thighs.','Pause in the full stretch.','Push up as high as you can.']),
+      ex('Hanging leg raise','Abs',['Hang still.','Raise straight-ish legs to hip height or higher.','Lower under control.'])
+    ]},
+    rest:{title:'Rest', sub:'Recovery day', list:[]}
+  };
+  // JS getDay(): 0 = Sunday … 6 = Saturday
+  var SCHEDULE = {6:'push', 0:'pull', 1:'legs', 2:'rest', 3:'upper', 4:'lower', 5:'rest'};
+  var WEEK_ORDER = [6,0,1,2,3,4,5];
+  var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var DAY_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MON_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function parse(iso){ var p = iso.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function today0(){ var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+  function daysUntil(iso){ return Math.round((parse(iso) - today0()) / 86400000); }
+  function fmt(iso){ var d = parse(iso); return MON[d.getMonth()] + ' ' + d.getDate(); }
+  function fmtEvent(e){ return e.s ? fmt(e.s) + '–' + parse(e.d).getDate() : fmt(e.d); }
+  function rel(n){ return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n < 0 ? 'Past' : 'in ' + n + ' days'; }
+  function ytLink(name){ return 'https://www.youtube.com/results?search_query=' + encodeURIComponent('how to do ' + name.replace(/\s*\(.*\)/,'') + ' proper form'); }
+
+  var state = { tab:'today', gymDay:new Date().getDay(), done:{} };
+  try{ var saved = localStorage.getItem('tracker-tab'); if(saved && /^(today|gym|school)$/.test(saved)) state.tab = saved; }catch(e){}
+  if(/^#(today|gym|school)$/.test(location.hash)) state.tab = location.hash.slice(1);
+
+  // Ticks live in this phone's storage. Seeded with items already finished before the app moved here.
+  var STORE_KEY = 'tracker-done';
+  var SEED_DONE = ['ara-quiz1','ara-t1','bio-mid1','bio-quiz1','bus-exam1','mth-t1','wri-ex1','wri-summary'];
+  var statusText = 'Saved on this phone', statusLive = true;
+  (function(){
+    var ids = SEED_DONE;
+    try{ var raw = localStorage.getItem(STORE_KEY); if(raw) ids = JSON.parse(raw); }catch(e){}
+    ids.forEach(function(id){ state.done[id] = true; });
+  })();
+
+  function rowHtml(e, opts){
+    var c = COURSES[e.c], done = !!state.done[e.id];
+    var n = e.d ? daysUntil(e.d) : null;
+    var past = n !== null && n < 0;
+    var whenTop = e.d ? fmtEvent(e) : 'TBA';
+    var whenSub = e.d ? (past ? 'Past' : rel(n)) : 'Nov 28 – Dec 10';
+    return '<div class="row' + (done ? ' done' : '') + (past ? ' past' : '') + '" style="--c:var(--c-' + e.c + ')">' +
+      '<button class="check" type="button" data-toggle="' + e.id + '" aria-pressed="' + done + '" aria-label="Mark ' + esc(c.code + ' ' + e.name) + ' as done"></button>' +
+      '<div class="txt"><div class="name">' + esc(c.code + ' · ' + e.name) + '</div><div class="detail">' + esc([e.detail, e.wt].filter(Boolean).join(' · ')) + '</div></div>' +
+      '<div class="when"><b>' + esc(whenTop) + '</b><span>' + esc(whenSub) + '</span></div>' +
+    '</div>';
+  }
+
+  function viewToday(){
+    var now = new Date(), dow = now.getDay(), key = SCHEDULE[dow], w = WORKOUTS[key];
+    var h = '<div class="head"><p class="eyebrow">' + DAY_LONG[dow] + ' · ' + now.getDate() + ' ' + MON_LONG[now.getMonth()] + '</p><h1>Hi Baraa</h1></div>';
+
+    h += '<section class="card workout" aria-label="Today’s workout"><div class="card-top"><span class="eyebrow">Today’s workout</span><span class="pill' + (key === 'rest' ? ' rest' : '') + '">' + esc(w.sub) + '</span></div>';
+    h += '<div class="big">' + esc(w.title) + (key === 'rest' ? ' day' : '') + '</div>';
+    if(key === 'rest'){
+      h += '<ul class="rest-list"><li>At least 10k steps</li><li>Hydrate</li><li>7–8 hours of sleep</li></ul>';
+    } else {
+      h += '<ul class="mini-list">' + w.list.map(function(x){ return '<li><span>' + esc(x.name) + '</span><span class="tag">' + esc(x.tag) + '</span></li>'; }).join('') + '</ul>';
+      h += '<button class="btn" type="button" data-go="gym">See form cues</button>';
+    }
+    h += '</section>';
+
+    var todays = CLASS_ORDER.filter(function(k){ return COURSES[k].days.indexOf(dow) !== -1; });
+    h += '<section class="card"><span class="eyebrow">Classes today</span>';
+    if(todays.length){
+      h += '<div class="classes">' + todays.map(function(k){ var c = COURSES[k]; return '<div class="class" style="--c:var(--c-' + k + ')"><span class="t">' + esc(c.time) + '</span><span><span class="c">' + esc(c.code) + '</span> <span class="muted">' + esc(c.room) + '</span></span></div>'; }).join('') + '</div>';
+    } else {
+      h += '<p class="empty">No classes today.</p>';
+    }
+    h += '</section>';
+
+    var upcoming = EVENTS.filter(function(e){ return !state.done[e.id] && daysUntil(e.d) >= 0; }).slice(0,3);
+    h += '<section class="card"><div class="card-top"><span class="eyebrow">Next deadlines</span><button class="btn" type="button" data-go="school">All</button></div>';
+    h += upcoming.length ? '<div class="rows">' + upcoming.map(rowHtml).join('') + '</div>' : '<p class="empty">Nothing left on the timeline. Final exam dates will appear once the Registrar posts them.</p>';
+    h += '</section>';
+    return h;
+  }
+
+  function viewGym(){
+    var todayDow = new Date().getDay();
+    var h = '<div class="head"><p class="eyebrow">PPL × Upper/Lower</p><h1>Weekly plan</h1></div>';
+    h += '<div class="week" role="group" aria-label="Pick a day">' + WEEK_ORDER.map(function(d){
+      var k = SCHEDULE[d];
+      return '<button class="day' + (k === 'rest' ? ' rest' : '') + (d === todayDow ? ' today' : '') + '" type="button" data-day="' + d + '" aria-pressed="' + (d === state.gymDay) + '"><span class="d">' + DAY_SHORT[d] + '</span><span class="w">' + esc(WORKOUTS[k].title) + '</span></button>';
+    }).join('') + '</div>';
+
+    var k = SCHEDULE[state.gymDay], w = WORKOUTS[k];
+    h += '<section class="card"><div class="card-top"><h2>' + DAY_LONG[state.gymDay] + ' · ' + esc(w.title) + '</h2><span class="pill' + (k === 'rest' ? ' rest' : '') + '">' + (k === 'rest' ? 'Recovery' : w.list.length + ' exercises') + '</span></div>';
+    if(k === 'rest'){
+      h += '<ul class="rest-list"><li>At least 10k steps</li><li>Hydrate</li><li>7–8 hours of sleep</li></ul>';
+    } else {
+      h += '<p class="muted" style="margin:0;font-size:14px">' + esc(w.sub) + '</p>';
+      h += w.list.map(function(x){
+        return '<div class="ex"><div class="ex-top"><span class="ex-name">' + esc(x.name) + '</span><span class="ex-tag">' + esc(x.tag) + '</span></div>' +
+          '<ol>' + x.cues.map(function(c){ return '<li>' + esc(c) + '</li>'; }).join('') + '</ol>' +
+          '<div class="ex-foot"><span class="sets">1–3 sets × 5–10 reps</span><a class="watch" href="' + ytLink(x.name) + '" target="_blank" rel="noopener">Watch how ↗</a></div></div>';
+      }).join('');
+    }
+    h += '</section>';
+
+    h += '<section class="card rules"><span class="eyebrow">How to progress</span>' +
+      '<p><b>Ladder progression.</b> Keep the same weight until you hit 10 reps, then add weight and start again at 5.</p>' +
+      '<div><div class="ladder" aria-hidden="true">' + [5,6,7,8,9,10].map(function(r){ return '<span style="height:' + (r*4) + 'px"></span>'; }).join('') + '<span class="up" style="height:42px"></span><span style="height:20px"></span></div>' +
+      '<div class="ladder-cap"><span>5 reps</span><span>10 reps → add weight</span><span>5</span></div></div>' +
+      '<p class="muted">Push each set close to failure. Low set counts only work when the sets are hard.</p></section>';
+    return h;
+  }
+
+  function viewSchool(){
+    var ids = EVENTS.map(function(e){return e.id;}).concat(TBA.map(function(t){return t.id;}));
+    var doneCount = ids.filter(function(id){ return state.done[id]; }).length;
+    var h = '<div class="head"><p class="eyebrow">Fall 2026 · AUS</p><h1>School</h1></div>';
+
+    h += '<section class="card"><span class="eyebrow">About me</span><div class="about">' +
+      '<div><span class="k">Name</span><span class="v">Baraa</span></div>' +
+      '<div><span class="k">Age</span><span class="v">18</span></div>' +
+      '<div><span class="k">Major</span><span class="v">Supply Chain Mgmt</span></div></div></section>';
+
+    h += '<section class="card"><div class="card-top"><span class="eyebrow">Semester progress</span><b style="font-family:var(--mono);font-size:13px">' + doneCount + ' of ' + ids.length + ' done</b></div>' +
+      '<div class="progress"><i style="width:' + (doneCount / ids.length * 100) + '%"></i></div>' +
+      '<span class="status' + (statusLive ? ' live' : '') + '" id="status">' + esc(statusText) + '</span></section>';
+
+    var groups = [];
+    EVENTS.forEach(function(e){
+      var m = parse(e.d).getMonth(), g = groups[groups.length-1];
+      if(!g || g.m !== m){ g = {m:m, items:[]}; groups.push(g); }
+      g.items.push(e);
+    });
+    groups.forEach(function(g){
+      h += '<section class="month"><h3>' + MON_LONG[g.m] + ' <small>' + g.items.length + ' item' + (g.items.length === 1 ? '' : 's') + '</small></h3><div class="rows">' + g.items.map(rowHtml).join('') + '</div></section>';
+    });
+
+    h += '<section class="month"><h3>Final exams <small>dates TBA</small></h3><p class="empty">Exam period is Nov 28 – Dec 10. Send Claude the dates once the Registrar posts them.</p><div class="rows">' + TBA.map(rowHtml).join('') + '</div></section>';
+
+    h += '<section class="card"><span class="eyebrow">Courses</span><div class="courses">' + CLASS_ORDER.map(function(k){
+      var c = COURSES[k];
+      return '<div class="course" style="--c:var(--c-' + k + ')"><span class="code">' + esc(c.code) + '</span><div><div>' + esc(c.title) + '</div><div class="meta">' + esc(c.days.map(function(d){return DAY_SHORT[d];}).join('/') + ' ' + c.time + ' · ' + c.room + ' · ' + c.who) + '</div></div></div>';
+    }).join('') + '</div></section>';
+    return h;
+  }
+
+  function render(){
+    var app = document.getElementById('app');
+    app.className = 'view';
+    app.innerHTML = state.tab === 'gym' ? viewGym() : state.tab === 'school' ? viewSchool() : viewToday();
+    document.querySelectorAll('.tab').forEach(function(t){ t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === state.tab)); });
+  }
+
+  function setTab(t){
+    if(t === state.tab) return;
+    state.tab = t;
+    try{ localStorage.setItem('tracker-tab', t); }catch(e){}
+    render();
+    window.scrollTo(0,0);
+  }
+
+  function setStatus(text, live){
+    statusText = text; statusLive = live;
+    var el = document.getElementById('status');
+    if(el){ el.textContent = text; el.classList.toggle('live', live); }
+  }
+
+  function toggle(id){
+    if(state.done[id]) delete state.done[id]; else state.done[id] = true;
+    render();
+    save();
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify(Object.keys(state.done)));
+      setStatus('Saved on this phone', true);
+    }catch(e){
+      setStatus('Couldn’t save. Ticks reset when you close the app.', false);
+    }
+  }
+
+  document.addEventListener('click', function(ev){
+    var t = ev.target.closest('[data-toggle],[data-tab],[data-go],[data-day]');
+    if(!t) return;
+    if(t.hasAttribute('data-toggle')) toggle(t.getAttribute('data-toggle'));
+    else if(t.hasAttribute('data-tab')) setTab(t.getAttribute('data-tab'));
+    else if(t.hasAttribute('data-go')) setTab(t.getAttribute('data-go'));
+    else if(t.hasAttribute('data-day')){ state.gymDay = +t.getAttribute('data-day'); render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
