@@ -44,7 +44,7 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
-  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(var(--nav-h) + 96px + env(safe-area-inset-bottom,0px))}
+  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(var(--nav-h) + 32px + env(safe-area-inset-bottom,0px))}
 
   h1,h2,h3{font-family:var(--display);font-stretch:75%;margin:0;text-wrap:balance;letter-spacing:.005em}
   h1{font-size:34px;font-weight:800;line-height:1.05}
@@ -152,13 +152,12 @@
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 
   .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .hello{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .music{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:10px 16px;border-radius:10px;text-decoration:none;
     font:700 14.5px var(--body);color:#1B1408;background:linear-gradient(115deg,#F7DE96,#C4943A 45%,#F0D07E 70%,#B8862B)}
   .music:hover{filter:brightness(1.05)}
   .music:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  #voice{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 82px);display:flex;justify-content:center;pointer-events:none;transform:translateZ(0);z-index:6}
-  #voice elevenlabs-convai{display:inline-block;pointer-events:auto}
 
   /* welcome splash, matches the gold icon */
   #splash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
@@ -269,6 +268,11 @@
     '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9 17.5a3 3 0 1 1-2-2.83V5.2l12-2.4v12.7a3 3 0 1 1-2-2.83V7.04L9 8.64z"/></svg>' +
     'Open my playlist</a>';
 
+  // Opens ElevenLabs' hosted talk page in Safari, where the iPhone mic works reliably.
+  var TALK_BTN = '<a class="music" href="https://elevenlabs.io/app/talk-to?agent_id=agent_3901m4nw65ddesstcr8dmxz3m47c" target="_blank" rel="noopener">' +
+    '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm7-4a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.07A7 7 0 0 0 19 11z"/></svg>' +
+    'Talk to Claude</a>';
+
   function ex(name, tag, cues){ return {name:name, tag:tag, cues:cues}; }
   var WORKOUTS = {
     push:{title:'Push', sub:'Chest · Shoulders · Triceps', list:[
@@ -360,7 +364,7 @@
 
   function viewToday(){
     var now = new Date(), dow = now.getDay(), key = SCHEDULE[dow], w = WORKOUTS[key];
-    var h = '<div class="head"><p class="eyebrow">' + DAY_LONG[dow] + ' · ' + now.getDate() + ' ' + MON_LONG[now.getMonth()] + '</p><h1>Hi Baraa</h1></div>';
+    var h = '<div class="head"><p class="eyebrow">' + DAY_LONG[dow] + ' · ' + now.getDate() + ' ' + MON_LONG[now.getMonth()] + '</p><div class="hello"><h1>Hi Baraa</h1>' + TALK_BTN + '</div></div>';
 
     h += '<section class="card workout" aria-label="Today’s workout"><div class="card-top"><span class="eyebrow">Today’s workout</span><span class="pill' + (key === 'rest' ? ' rest' : '') + '">' + esc(w.sub) + '</span></div>';
     h += '<div class="big">' + esc(w.title) + (key === 'rest' ? ' day' : '') + '</div>';
@@ -500,7 +504,7 @@
 
   // Home-screen apps can cling to an old copy. On every open, compare against version.txt
   // on the server and reload with a cache-busting URL when a newer build exists.
-  var APP_VERSION = '2026-10-11.3';
+  var APP_VERSION = '2026-10-11.4';
   function checkForUpdate(){
     fetch('version.txt?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(v){
       v = v.trim();
@@ -513,9 +517,5 @@
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') checkForUpdate(); });
 })();
 </script>
-<!-- ElevenLabs voice agent. The transformed wrapper becomes the widget's positioning box,
-     so its floating button sits above the bottom tab bar instead of covering it. -->
-<div id="voice"><elevenlabs-convai agent-id="agent_3901m4nw65ddesstcr8dmxz3m47c"</elevenlabs-convai></div>
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2/dist/index.js" async type="text/javascript"></script>
 </body>
 </html>
