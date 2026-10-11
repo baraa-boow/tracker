@@ -494,6 +494,20 @@
   });
 
   render();
+
+  // Home-screen apps can cling to an old copy. On every open, compare against version.txt
+  // on the server and reload with a cache-busting URL when a newer build exists.
+  var APP_VERSION = '2026-10-11.2';
+  function checkForUpdate(){
+    fetch('version.txt?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(v){
+      v = v.trim();
+      if(!v || v === APP_VERSION) return;
+      try{ if(localStorage.getItem('tracker-update-tried') === v) return; localStorage.setItem('tracker-update-tried', v); }catch(e){ return; }
+      location.replace(location.pathname + '?v=' + encodeURIComponent(v));
+    }).catch(function(){});
+  }
+  checkForUpdate();
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') checkForUpdate(); });
 })();
 </script>
 </body>
