@@ -519,9 +519,37 @@
 
   render();
 
+  // Live info for the voice agent, sent as ElevenLabs dynamic variables when a talk starts,
+  // so the agent always matches this app (dates, plan, ticks) without editing its prompt.
+  window.trackerContext = function(){
+    var now = new Date(), dow = now.getDay();
+    function workoutLine(d){
+      var w = WORKOUTS[SCHEDULE[d]];
+      return SCHEDULE[d] === 'rest' ? 'Rest (10k steps, hydrate, 7-8 h sleep)' : w.title + ' (' + w.sub + '): ' + w.list.map(function(x){ return x.name; }).join(', ');
+    }
+    var plan = WEEK_ORDER.map(function(d){ return DAY_LONG[d] + ': ' + workoutLine(d); }).join('\n');
+    var classes = [1,2,3,4].map(function(d){
+      var ks = CLASS_ORDER.filter(function(k){ return COURSES[k].days.indexOf(d) !== -1; });
+      return DAY_LONG[d] + ': ' + ks.map(function(k){ return COURSES[k].code + ' at ' + COURSES[k].time.split('–')[0]; }).join(', ');
+    }).join('\n') + '\nFriday to Sunday: no classes';
+    var upcoming = EVENTS.filter(function(e){ return !state.done[e.id] && daysUntil(e.d) >= 0; }).map(function(e){
+      var n = daysUntil(e.s || e.d);
+      return fmtEvent(e) + ' (' + (n <= 0 ? (e.s ? 'due now' : 'today') : n === 1 ? 'tomorrow' : 'in ' + n + ' days') + '): ' + COURSES[e.c].code + ' ' + e.name + (e.detail ? ', ' + e.detail : '');
+    });
+    var finals = TBA.filter(function(t){ return !state.done[t.id]; }).map(function(t){ return COURSES[t.c].code + ' ' + t.name; });
+    if(finals.length) upcoming.push('Nov 28 to Dec 10, exact dates not announced: ' + finals.join('; '));
+    return {
+      today: DAY_LONG[dow] + ', ' + now.getDate() + ' ' + MON_LONG[now.getMonth()] + ' ' + now.getFullYear(),
+      todays_workout: workoutLine(dow),
+      gym_plan: plan + '\nAll exercises: 1-3 sets of 5-10 reps, ladder progression (same weight until 10 reps, then add weight).',
+      class_schedule: classes,
+      deadlines: upcoming.length ? upcoming.join('\n') : 'Nothing left on the list.'
+    };
+  };
+
   // Home-screen apps can cling to an old copy. On every open, compare against version.txt
   // on the server and reload with a cache-busting URL when a newer build exists.
-  var APP_VERSION = '2026-10-11.7';
+  var APP_VERSION = '2026-10-11.8';
   function checkForUpdate(){
     fetch('version.txt?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(v){
       v = v.trim();
@@ -611,6 +639,7 @@
       var sess = mod.Conversation.startSession({
         agentId: AGENT_ID,
         connectionType: 'websocket',
+        dynamicVariables: window.trackerContext ? window.trackerContext() : {},
         onConnect: function(){ setStatus('Listening', 'listening'); lineEl.textContent = ''; },
         onDisconnect: function(){ if(!closing && convo){ close(); } },
         onModeChange: function(m){ mode = val(m, 'mode') || 'listening'; setStatus(mode === 'speaking' ? 'Speaking' : 'Listening', mode); },
